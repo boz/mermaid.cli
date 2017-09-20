@@ -19,9 +19,10 @@ commander
   .option('-H, --height [height]', 'Height of the page. Optional. Default: 600', /^\d+$/, '600')
   .option('-i, --input <input>', 'Input mermaid file. Required.')
   .option('-o, --output [output]', 'Output image file. It should be either svg or png. Optional. Default: input + ".svg"')
+  .option('--disable-sandbox','Disable chrome sandbox (warning: insecure)')
   .parse(process.argv)
 
-let { theme, width, height, input, output } = commander
+let { theme, width, height, input, output, disableSandbox } = commander
 
 // check input file
 if (!input) {
@@ -43,12 +44,18 @@ if (!fs.existsSync(outputDir)) {
   error(`Output directory "${outputDir}/" doesn't exist`)
 }
 
+var puppeteerArgs = {}
+
+if (disableSandbox) {
+  puppeteerArgs = {args: ['--no-sandbox','--disable-suid-sandbox']}
+}
+
 // normalize args
 width = parseInt(width)
 height = parseInt(height)
 
 ;(async () => {
-  const browser = await puppeteer.launch()
+  const browser = await puppeteer.launch(puppeteerArgs)
   const page = await browser.newPage()
   page.setViewport({ width, height })
   await page.goto(`file://${path.join(__dirname, 'index.html')}`)
